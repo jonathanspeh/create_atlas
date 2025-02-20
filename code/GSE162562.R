@@ -20,8 +20,9 @@ untar(here::here("data", file),
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
+
 meta <- pData(sm$GSE162562_series_matrix.txt.gz) |> 
-  dplyr::select(accession = geo_accession,
+  dplyr::select(id = geo_accession,
                 sample_name = title,
                 sample_type =  characteristics_ch1.2,
                 age = "age:ch1",

@@ -6,7 +6,7 @@ library(dplyr)
 library(tidyr)
 
 
-GEO_accs <- "GSE201530"
+GEO_accs <- "GSE205244"
 file <- paste0(GEO_accs, ".tar")
 dir_path <- paste0(here::here("data", GEO_accs), "/")
 
@@ -20,6 +20,7 @@ untar(here::here("data", file),
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
+pData(sm[[1]]) |> glimpse()
 
 meta <- pData(sm[[1]]) |> 
   dplyr::select(id = geo_accession,
@@ -27,38 +28,37 @@ meta <- pData(sm[[1]]) |>
                 sample_type =  characteristics_ch1.2,
                 age = "age:ch1",
                 sex = "gender:ch1",
-                group = "disease state:ch1") |> 
+                sampling_time = "days after positive pcr results:ch1",
+                group = "disease state:ch1",
+                omicron_lineage = "omicron sublineage:ch1") |> 
   mutate(individual = sub("^.*_(\\d+)_.*$", "\\1", sample_name),
-         disease = case_when(grepl("control", sample_type) ~ "healthy",
-                             TRUE ~ "COVID-19"),
+         sampling_point = sub("^.*?(\\d+)\\D*$", "\\1", sample_name), 
+         disease = "COVID-19",
          variant = "Omicron",
          dataset = GEO_accs
   )
 
-
-
+glimpse(meta)
 
 files <- list.files(dir_path, full.names = FALSE)
 files <- files[grepl("GSM", files)]
 
-read_counts <- function(name){
-  sample <- stringr::str_remove(name, "_.*.txt.gz")
-  file <- fread(paste0(dir_path, name)) |>
-    dplyr::filter(!grepl("^__", V1)) 
-  colnames(file) <- c("gene", substitute(sample))
-  file
-}
-
 counts <- lapply(files, read_counts)
-
 counts_raw <- purrr::reduce(counts, full_join, by = "gene") 
+
+
+meta_point1 <- dplyr::filter(meta, sampling_point == 1)
+counts_point1 <-  dplyr::select(counts_raw, c(gene, meta_point1$id))
 
 
 
 se <- SummarizedExperiment(
-  assays = list(counts = as.matrix(counts_raw[,-1])),
-  colData = meta,
-  metadata = list(notes = "covid 19 (Omicron) patienst with ans without previous challenge (infection / vaccine) and healthy controls")
+  assays = list(counts = as.matrix(counts_point1[,-1])),
+  colData = meta_point1,
+  metadata = list(notes = "covid 19 (Omicron), only sampling point one is included in assay, full data in meta data",
+                  full_counts = counts_raw,
+                  full_meta = meta)
+  
 )
 
 rownames(se) <- mapIds(EnsDb.Hsapiens.v86,
@@ -68,6 +68,7 @@ rownames(se) <- mapIds(EnsDb.Hsapiens.v86,
 
 se <- se[!is.na(rownames(se)),]
 saveRDS(se, paste0("data/ses/", GEO_accs, "_se.RDS"))
+
 
 
 

@@ -19,7 +19,7 @@ library(tidyr)
 sm <- getGEO("GSE190680", destdir = here::here("data", "GSE190680"))
 
 meta <- pData(sm$GSE190680_series_matrix.txt.gz) |> 
-  dplyr::select(accession = geo_accession,
+  dplyr::select(id = geo_accession,
          sample_name = title,
          sample_type =  characteristics_ch1.2,
          age = "age:ch1",
@@ -55,7 +55,7 @@ counts <- lapply(files, read_counts)
 counts_raw <- purrr::reduce(counts, full_join, by = "gene") 
 meta_point1 <- dplyr::filter(meta, sampling_point == 1)
 
-counts_point1 <-  dplyr::select(counts_raw, c(gene, meta_point1$accession))
+counts_point1 <-  dplyr::select(counts_raw, c(gene, meta_point1$id))
 
 
 se <- SummarizedExperiment(
