@@ -10,35 +10,51 @@ GEO_accs <- "GSE205244"
 file <- paste0(GEO_accs, ".tar")
 dir_path <- paste0(here::here("data", GEO_accs), "/")
 
-curl::curl_download(paste0("https://www.ncbi.nlm.nih.gov/geo/download/?acc=", 
-                           GEO_accs, 
-                           "&format=file"),
-                    destfile = here::here("data", file))
-
-untar(here::here("data", file), 
-      exdir = dir_path)
+# curl::curl_download(paste0("https://www.ncbi.nlm.nih.gov/geo/download/?acc=", 
+#                            GEO_accs, 
+#                            "&format=file"),
+#                     destfile = here::here("data", file))
+# 
+# untar(here::here("data", file), 
+#       exdir = dir_path)
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
-pData(sm[[1]]) |> glimpse()
 
 meta <- pData(sm[[1]]) |> 
-  dplyr::select(id = geo_accession,
+  rowwise() |>
+  mutate(processing_info = list(across(everything()))) |>
+  ungroup() |>
+  dplyr::rename(id = geo_accession,
                 sample_name = title,
                 sample_type =  characteristics_ch1.2,
                 age = "age:ch1",
                 sex = "gender:ch1",
                 sampling_time = "days after positive pcr results:ch1",
                 group = "disease state:ch1",
-                omicron_lineage = "omicron sublineage:ch1") |> 
+                omicron_lineage = "omicron sublineage:ch1",
+                source = "cell type:ch1") |> 
   mutate(individual = sub("^.*_(\\d+)_.*$", "\\1", sample_name),
          sampling_point = sub("^.*?(\\d+)\\D*$", "\\1", sample_name), 
          disease = "COVID-19",
          variant = "Omicron",
-         dataset = GEO_accs
-  )
+         dataset = GEO_accs,
+         pediatric = FALSE
+         # processing_info = paste(
+         #   "growth_protocol:", growth_protocol_ch1,
+         #   "extract_protocol:", extract_protocol_ch1,
+         #   "library_prep:", extract_protocol_ch1.1, 
+         #   "data_processing_1:", data_processing,
+         #   "data_processing_2:", data_processing.1,
+         #   "data_processing_3:", data_processing.2,
+         #   "assembly:", data_processing.4,
+         #   "instrument:", instrument_model,
+         #   sep = "\t")
+         ) |>
+    dplyr::select(id, individual, sample_name, sample_type, age, pediatric,sex, group, 
+                  omicron_lineage, sampling_time, sampling_point, disease, variant, 
+                  processing_info, source, dataset)
 
-glimpse(meta)
 
 files <- list.files(dir_path, full.names = FALSE)
 files <- files[grepl("GSM", files)]

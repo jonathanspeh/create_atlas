@@ -10,31 +10,35 @@ GEO_accs <- "GSE201530"
 file <- paste0(GEO_accs, ".tar")
 dir_path <- paste0(here::here("data", GEO_accs), "/")
 
-curl::curl_download(paste0("https://www.ncbi.nlm.nih.gov/geo/download/?acc=", 
-                           GEO_accs, 
-                           "&format=file"),
-                    destfile = here::here("data", file))
-
-untar(here::here("data", file), 
-      exdir = dir_path)
+# curl::curl_download(paste0("https://www.ncbi.nlm.nih.gov/geo/download/?acc=", 
+#                            GEO_accs, 
+#                            "&format=file"),
+#                     destfile = here::here("data", file))
+# 
+# untar(here::here("data", file), 
+#       exdir = dir_path)
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
 
 meta <- pData(sm[[1]]) |> 
+  rowwise() |>
+  mutate(processing_info = list(across(everything()))) |>
+  ungroup() |>
   dplyr::select(id = geo_accession,
                 sample_name = title,
                 sample_type =  characteristics_ch1.2,
                 age = "age:ch1",
                 sex = "gender:ch1",
-                group = "disease state:ch1") |> 
+                group = "disease state:ch1",
+                source = "cell type:ch1", 
+                processing_info) |> 
   mutate(individual = sub("^.*_(\\d+)_.*$", "\\1", sample_name),
          disease = case_when(grepl("control", sample_type) ~ "healthy",
                              TRUE ~ "COVID-19"),
          variant = "Omicron",
-         dataset = GEO_accs
-  )
-
+         dataset = GEO_accs,
+         pediatric = FALSE)
 
 
 

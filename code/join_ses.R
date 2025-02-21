@@ -10,29 +10,16 @@ files <- files[grepl("_se.RDS", files)]
 counts_list <- lapply(files, readRDS)
 
 
-assay_list <- lapply(counts_list, assay, "counts")
-common_genes <- Reduce(intersect, lapply(assay_list, rownames))
-assay_list <- lapply(assay_list, dplyr::as_tibble, rownames="gene")
-
-assays_filtered <- lapply(assay_list, dplyr::filter, gene %in% common_genes)
-
-combined_assay <- purrr::reduce(assays_filtered, dplyr::full_join, by = "gene")
-
-
 
 #TODO - add messages to combine_se()?
-combined_se <- combine_se(counts_list)
+combined_se <- combine_se(counts_list[-5])
 
-norm_assays <- assay(combined_se, "counts")
-norm_factors <- colSums(norm_assays)
+adult_se <- combined_se[,!colData(combined_se)$pediatric]
 
-norm_assays <- t(t(norm_assays) / norm_factors) * 1e6
-
-sample_cor <- cor(assay(combined_se, "counts"))
-norm_cor = cor(norm_assays)
+sample_cor <- cor(assay(adult_se, "counts"))
 
 
-as_tibble(norm_cor, rownames = "x") |>
+as_tibble(sample_cor, rownames = "x") |>
   pivot_longer(!x, names_to = "y") |>
   left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
   #dplyr::filter(value > .99) |>

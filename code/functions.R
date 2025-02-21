@@ -14,31 +14,33 @@ read_counts <- function(name){
 # TODO - add functions and look-up table to harmonise diseases
 
 
-combine_se <- function(se_list){
+combine_se <- function(se_list, common_only = TRUE){
   stopifnot(
     "alle SEs must have unique colnames" = !any(duplicated(unlist(lapply(se_list, colnames)))),
     "all SEs must have a counts assay" = all(unlist(lapply(se_list, assayNames)) %in% "counts"),
     "rownames of the SE cannot be NA" = all(!is.na(unlist(lapply(se_list, rownames)))),
-    "all dataset need id, disease and dataset columns" = {
+    "all dataset need id, disease, dataset, age, sex, source and processing_info" = {
       coldata_list <- lapply(se_list, colData)
-      all(c("id", "disease", "dataset") %in% Reduce(intersect, lapply(coldata_list, colnames)))
-    }
-    
-  )
+      all(
+        c("id", "disease", "dataset", 
+          "id", "age", "sex", "source", "processing_info") %in% 
+          Reduce(intersect, lapply(coldata_list, colnames)))})
   
   ### Combine Assays - c
   #TODO - make sure datasets are joined on common genes
   assay_list <- lapply(se_list, assay, "counts")
   common_genes <- Reduce(intersect, lapply(assay_list, rownames))
   assay_list <- lapply(assay_list, dplyr::as_tibble, rownames="gene")
+  if(common_only) {
+    message(paste("joining on", length(common_genes), "common genes"))
+    assay_list <- lapply(assay_list, dplyr::filter, gene %in% common_genes)
+  }
   
-  assays_filtered <- lapply(assay_list, dplyr::filter, gene %in% common_genes)
-  
-  combined_assay <- purrr::reduce(assays_filtered, dplyr::full_join, by = "gene")
+  combined_assay <- purrr::reduce(assay_list, dplyr::full_join, by = "gene")
   
   
   
-  ### Combine sample infromations 
+  ### Combine sample informations 
   coldata_list <- lapply(se_list, colData)
   coldata_list <- lapply(coldata_list, dplyr::as_tibble)  
   
@@ -53,3 +55,7 @@ combine_se <- function(se_list){
   colnames(combined_se) <- combined_meta$id
   combined_se
 }
+
+
+
+
