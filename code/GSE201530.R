@@ -62,7 +62,7 @@ counts_raw <- purrr::reduce(counts, full_join, by = "gene")
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_raw[,-1])),
   colData = meta,
-  metadata = list(notes = "covid 19 (Omicron) patienst with ans without previous challenge (infection / vaccine) and healthy controls")
+  metadata = list(notes = "covid 19 (Omicron) patients with and without previous challenge (infection / vaccine) and healthy controls")
 )
 
 rownames(se) <- mapIds(EnsDb.Hsapiens.v86,

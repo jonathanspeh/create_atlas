@@ -75,6 +75,16 @@ counts_raw <- purrr::reduce(count_list, full_join, by = "gene")
 meta_wb <- dplyr::filter(meta, source == "Whole Blood")
 counts_wb <-  dplyr::select(counts_raw, c("gene", meta_wb$id))
 
+meta_wb <- meta_wb |>
+  mutate(disease = 
+           case_when(grepl("No path", disease) ~ "healthy",
+                     grepl("CoV-2", disease) ~ "COVID-19",
+                     grepl("Escherichia", disease) ~ "escherichia coli infection",
+                     grepl("Group C Strep", disease) ~ "group c streptococcal infection",
+                     grepl("Klebsiella pn", disease) ~ "klebsielle pneumoniae infection",
+                     grepl("Klebsiella ox", disease) ~ "klebsielle oxytoca infection",
+                     TRUE ~ disease))
+
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_wb[,-1])),

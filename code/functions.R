@@ -47,7 +47,17 @@ combine_se <- function(se_list, common_only = TRUE){
   ## could use this for cleaner metadata - only use columns that are in all 
   #common_cols <- Reduce(intersect, lapply(coldata_list, colnames))
   #combined_meta <- dplyr::bind_rows(lapply(coldata_list, dplyr::select, dplyr::all_of(common))) 
-  combined_meta <- dplyr::bind_rows(coldata_list) 
+  combined_meta <- dplyr::bind_rows(coldata_list)
+  
+  #TODO - Make more elegant
+  combined_meta$disease <- tolower(combined_meta$disease)
+  combined_meta$disease <- stringr::str_replace_all(combined_meta$disease, " ", "_")
+  combined_meta$source <- tolower(combined_meta$source)
+  combined_meta$source <- stringr::str_replace_all(combined_meta$source, " ", "_")
+  
+  
+  
+  
   combined_se <- SummarizedExperiment::SummarizedExperiment(
     assays = list("counts" = combined_assay[,-1]),
     colData = combined_meta)

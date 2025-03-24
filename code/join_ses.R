@@ -9,18 +9,15 @@ files <- files[grepl("_se.RDS", files)]
 
 counts_list <- lapply(files, readRDS)
 
-
-
-#TODO - add messages to combine_se()?
-combined_se <- combine_se(counts_list[-5])
+combined_se <- combine_se(counts_list)
 
 adult_se <- combined_se[,!colData(combined_se)$pediatric]
+ped_se <- combined_se[,colData(combined_se)$pediatric]
 
 sample_cor <- cor(assay(adult_se, "counts"))
 
-
 as_tibble(sample_cor, rownames = "x") |>
-  pivot_longer(!x, names_to = "y") |>
+  tidyr::pivot_longer(!x, names_to = "y") |>
   left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
   #dplyr::filter(value > .99) |>
   ggplot(aes(x = x, y = y )) +
@@ -32,13 +29,15 @@ as_tibble(sample_cor, rownames = "x") |>
   geom_tile(aes(y = -5, fill = dataset, height = 5)) + 
   scale_fill_brewer(palette = "Set1") + 
   ggnewscale::new_scale_fill() + 
-  geom_tile(aes(y = -10, fill = disease, height = 5))
+  geom_tile(aes(y = -11, fill = disease, height = 5)) +
+  ggnewscale::new_scale_fill() + 
+  geom_tile(aes(y = -17, fill = source, height = 5))
 
 
 
 
 
-pca <- prcomp(t(assay(combined_se, "counts")))
+pca <- prcomp(t(assay(adult_se , "counts")))
 
 as_tibble(pca$x, rownames = "id") |>
   left_join(as.data.frame(colData(combined_se))) |>
