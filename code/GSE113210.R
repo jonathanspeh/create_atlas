@@ -6,17 +6,19 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 
-#. Failed -only transcipt level annotations in GEO object -  could use rawer data
-
+# Not sure if witrht to be included
 
 GEO_accs <- "GSE113210"
 download <- "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE113210&format=file&file=GSE113210%5FAVB%5FPBMC%5Fraw%5Fcounts%2Ecsv%2Egz"
-file <- paste0(GEO_accs, ".csv.gz")
-dir_path <- paste0(here::here("data", GEO_accs), "/")
+dir_path <- here::here("data", GEO_accs)
+file_path <- here::here(dir_path, paste0(GEO_accs, ".csv.gz"))
 
-dir.create(dir_path)
-curl::curl_download(download,
-                    destfile = here::here(dir_path, file))
+if(!file.exists(file_path)){
+  dir.create(dir_path)
+  curl::curl_download(download,
+                      destfile = file_path)
+  }
+
 
 
 sm <- getGEO(GEO_accs, destdir = dir_path)

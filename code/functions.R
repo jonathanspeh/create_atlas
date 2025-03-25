@@ -2,7 +2,7 @@
 # Read count txt files and adjsut column names to contain sample accession
 read_counts <- function(name){
   sample <- stringr::str_remove(name, "_.*.txt.gz")
-  file <- data.table::fread(paste0(dir_path, name)) |>
+  file <- data.table::fread(here::here(dir_path, name)) |>
     dplyr::filter(!grepl("^__", V1)) 
   colnames(file) <- c("gene", substitute(sample))
   file
@@ -43,6 +43,7 @@ combine_se <- function(se_list, common_only = TRUE){
   ### Combine sample informations 
   coldata_list <- lapply(se_list, colData)
   coldata_list <- lapply(coldata_list, dplyr::as_tibble)  
+  coldata_list <- lapply(coldata_list, function(x) {x$age = as.integer(x$age); x})
   
   ## could use this for cleaner metadata - only use columns that are in all 
   #common_cols <- Reduce(intersect, lapply(coldata_list, colnames))
@@ -54,9 +55,12 @@ combine_se <- function(se_list, common_only = TRUE){
   combined_meta$disease <- stringr::str_replace_all(combined_meta$disease, " ", "_")
   combined_meta$source <- tolower(combined_meta$source)
   combined_meta$source <- stringr::str_replace_all(combined_meta$source, " ", "_")
-  
-  
-  
+  combined_meta$sex <- tolower(combined_meta$sex)
+  combined_meta <- combined_meta |>
+    dplyr::mutate(sex = dplyr::case_when(sex == "f" ~ "female",
+                                  sex == "m" ~ "male",
+                                  TRUE ~ sex))
+
   
   combined_se <- SummarizedExperiment::SummarizedExperiment(
     assays = list("counts" = combined_assay[,-1]),

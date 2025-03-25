@@ -11,20 +11,38 @@ library(stringr)
 
 GEO_accs <- "GSE115823"
 download <- "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE115823&format=file&file=GSE115823%5Fraw%5Fcounts%5Fblood%5Fmuppits511%2Etxt%2Egz"
-file <- paste0(GEO_accs, ".txt.gz")
-dir_path <- paste0(here::here("data", GEO_accs), "/")
+dir_path <- here::here("data", GEO_accs)
+file_path <- here::here(dir_path, paste0(GEO_accs, ".txt.gz"))
 
-dir.create(dir_path)
-curl::curl_download(download,
-                    destfile = here::here(dir_path, file))
+
+
+
+if(!file.exists(file_path)){
+  dir.create(dir_path)
+  curl::curl_download(download,
+                      destfile = file_path)
+}
 
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
-pData(sm[[1]]) |> dplyr:: select(starts_with("char"))
+# Visist 0 --> Baseline, no infection, no exacerbation
 
 
 
+ pData(sm[[1]]) |> dplyr:: select(geo_accession, starts_with("char")) |> 
+  pivot_longer(starts_with("char"), names_to = NULL) |>
+   filter(value != "") |>
+  separate_wider_delim(value, delim = ": ", names = c("name", "value")) |>
+   pivot_wider(names_from = name, values_from = value) |>
+   select(age.in.years, Sex, analysis.visit, case.or.control.status.event, csteroid.start.relative.to.visit, starts_with("virus")) |>
+   #filter(analysis.visit != "Visit 0") |>
+   print(n = 550)
+   
+    #select(starts_with("virus")) -> virmat
+  
+
+ 
 
 meta <- pData(sm[[1]]) |> 
   as_tibble(rownames = "id")

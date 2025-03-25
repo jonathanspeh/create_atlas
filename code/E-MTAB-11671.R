@@ -35,8 +35,7 @@ meta_fixed <- meta[rep(c(T,F), 411),] |>
     id = source_name,
     age_month = characteristics_age,
     sex = characteristics_sex,
-    disease = characteristics_disease,
-    source = characteristics_organism_part) |>
+    disease = characteristics_disease) |>
   mutate(
           sample_name = id,
           id = paste0(accs, "_", id),
@@ -49,6 +48,7 @@ meta_fixed <- meta[rep(c(T,F), 411),] |>
           #   "comment_library_strategy", comment_library_strategy,
           #   sep = "\t"),
           dataset = accs,
+          source = "whole_blood",
           pediatric = TRUE
           ) |>
   dplyr::select(id, sample_name, age_month, age, sex, pediatric, disease, processing_info, source, dataset)
