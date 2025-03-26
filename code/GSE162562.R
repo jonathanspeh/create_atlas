@@ -37,17 +37,7 @@ meta <- pData(sm$GSE162562_series_matrix.txt.gz) |>
          disease = case_when(grepl("Seronegativ", sample_type) ~ "healthy",
                              TRUE ~ "COVID-19"),
          dataset = GEO_accs, 
-         pediatric = FALSE
-         #      processing_info = paste(
-    # "growth_protocol:", growth_protocol_ch1,
-    # "extract_protocol:", extract_protocol_ch1,
-    # "library_prep:", extract_protocol_ch1.1, 
-    # "data_processing_1:", data_processing,
-    # "data_processing_2:", data_processing.1,
-    # "assembly:", data_processing.2,
-    # "instrument:", instrument_model,
-    # sep = "\t")
-    ) |>
+         pediatric = as.numeric(age) < 18) |>
   dplyr::select(id, individual, sample_name, sample_type, age, pediatric, sex, comorbidities,
                 disease, 
                 processing_info, source, dataset)

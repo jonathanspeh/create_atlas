@@ -38,7 +38,7 @@ meta <- pData(sm[[1]]) |>
                              TRUE ~ "COVID-19"),
          variant = "Omicron",
          dataset = GEO_accs,
-         pediatric = FALSE)
+         pediatric = as.numeric(age) < 18)
 
 
 

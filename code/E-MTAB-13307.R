@@ -31,7 +31,7 @@ colnames(meta) <- janitor::make_clean_names(colnames(meta))
 meta$source_name <- janitor::make_clean_names(meta$source_name)
 colnames(counts) <- paste0(GEO_accs, "_", janitor::make_clean_names(colnames(counts)))
 
-meta$age
+meta$factor_value_pathogen
 
 meta <- meta[rep(c(T,F), nrow(meta)/2),] |> 
   rowwise() |>
@@ -50,6 +50,8 @@ meta <- meta[rep(c(T,F), nrow(meta)/2),] |>
       factor_value_pathogen == "Measles" ~ "Measles",
       factor_value_pathogen == "Escherichia coli (ESBL)" ~ "Escherichia coli infection",
       factor_value_pathogen == "Herpes zoster myeloma" ~ "Herpes zoster myeloma",
+      factor_value_pathogen == "Enteroviral meningitis" ~ "Enteroviral meningitis",
+      factor_value_pathogen == "Streptococcus pneumoniae" ~ "pneumococcal infection",
       TRUE ~ paste(factor_value_pathogen, "infection")),
     dataset = GEO_accs,
     pediatric = characteristics_developmental_stage != "adult", 

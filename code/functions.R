@@ -10,10 +10,18 @@ read_counts <- function(name){
 
 
 
+# Verify that diseases are found in manually curated list of allowed inputs
+verify_disease <- function(meta){
+  allowed <- readxl::read_excel(here::here("data", "curated_diseases.xlsx"))$disease
+  not_verified <- unique(meta[!meta$disease %in% allowed, c("disease", "dataset")])
+  if(nrow(not_verified) != 0){
+    warning("Not all diseases could be verified: ", paste(capture.output(print(not_verified)), 
+                                                          collapse = "\n"))
+  }
+}
+
+
 # Takes list of summarised experiments and combines them
-# TODO - add functions and look-up table to harmonise diseases
-
-
 combine_se <- function(se_list, common_only = TRUE){
   stopifnot(
     "alle SEs must have unique colnames" = !any(duplicated(unlist(lapply(se_list, colnames)))),
@@ -25,20 +33,6 @@ combine_se <- function(se_list, common_only = TRUE){
         c("id", "disease", "dataset", 
           "id", "age", "sex", "source", "processing_info") %in% 
           Reduce(intersect, lapply(coldata_list, colnames)))})
-  
-  ### Combine Assays - c
-  #TODO - make sure datasets are joined on common genes
-  assay_list <- lapply(se_list, assay, "counts")
-  common_genes <- Reduce(intersect, lapply(assay_list, rownames))
-  assay_list <- lapply(assay_list, dplyr::as_tibble, rownames="gene")
-  if(common_only) {
-    message(paste("joining on", length(common_genes), "common genes"))
-    assay_list <- lapply(assay_list, dplyr::filter, gene %in% common_genes)
-  }
-  
-  combined_assay <- purrr::reduce(assay_list, dplyr::full_join, by = "gene")
-  
-  
   
   ### Combine sample informations 
   coldata_list <- lapply(se_list, colData)
@@ -58,9 +52,25 @@ combine_se <- function(se_list, common_only = TRUE){
   combined_meta$sex <- tolower(combined_meta$sex)
   combined_meta <- combined_meta |>
     dplyr::mutate(sex = dplyr::case_when(sex == "f" ~ "female",
-                                  sex == "m" ~ "male",
-                                  TRUE ~ sex))
-
+                                         sex == "m" ~ "male",
+                                         TRUE ~ sex))
+  
+  verify_disease(combined_meta)
+  
+  
+  ### Combine Assays 
+  assay_list <- lapply(se_list, assay, "counts")
+  common_genes <- Reduce(intersect, lapply(assay_list, rownames))
+  assay_list <- lapply(assay_list, dplyr::as_tibble, rownames="gene")
+  if(common_only) {
+    message(paste("joining on", length(common_genes), "common genes"))
+    assay_list <- lapply(assay_list, dplyr::filter, gene %in% common_genes)
+  }
+  
+  combined_assay <- purrr::reduce(assay_list, dplyr::full_join, by = "gene")
+  
+  stopifnot("All counts must be integer" = all(round(combined_assay[,-1]) == combined_assay[,-1]))
+  
   
   combined_se <- SummarizedExperiment::SummarizedExperiment(
     assays = list("counts" = combined_assay[,-1]),

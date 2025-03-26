@@ -81,8 +81,8 @@ meta_wb <- meta_wb |>
                      grepl("CoV-2", disease) ~ "COVID-19",
                      grepl("Escherichia", disease) ~ "escherichia coli infection",
                      grepl("Group C Strep", disease) ~ "group c streptococcal infection",
-                     grepl("Klebsiella pn", disease) ~ "klebsielle pneumoniae infection",
-                     grepl("Klebsiella ox", disease) ~ "klebsielle oxytoca infection",
+                     grepl("Klebsiella pn", disease) ~ "klebsiella pneumoniae infection",
+                     grepl("Klebsiella ox", disease) ~ "klebsiella oxytoca infection",
                      TRUE ~ disease))
 
 

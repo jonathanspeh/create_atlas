@@ -23,8 +23,6 @@ if(!file.exists(file_path)){
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
-pData(sm[[1]]) |> dplyr:: select(starts_with("age")) |> as.numeric()
-
 
 meta <- pData(sm[[1]]) |> 
   rowwise() |>
@@ -42,7 +40,7 @@ meta <- pData(sm[[1]]) |>
                              `pathogen:ch1` =="FLU" ~ "Influenza",
                              `pathogen:ch1` =="Adenovirus" ~ "adenovirus_infection",
                              `pathogen:ch1` =="RSV,HRV" ~ "rsv and rhinovirus infection",
-                             `pathogen:ch1` =="RSV,EV-D68" ~ "rsv abd ebterovirus D-86 infection",
+                             `pathogen:ch1` =="RSV,EV-D68" ~ "rsv and enterovirus D-86 infection",
                              TRUE ~ `pathogen:ch1`),
          dataset = GEO_accs, 
          pediatric = TRUE,

@@ -35,7 +35,7 @@ meta <- pData(sm[[1]]) |>
                 group = "group:ch1"
   ) |> 
   mutate(disease = case_when(grepl("(sGAS)", description) ~ "group a streptococcal infection",
-                             grepl("(vCtrl)", description) ~ "asymptomatic infection",
+                             grepl("(vCtrl)", description) ~ "asymptomatic non-adenovirus infection",
                              grepl("(sGAS)", description) ~ "group a streptococcal colonisation",
                              grepl("(nCtrl)", description) ~ "healthy",
                              grepl("(sAdV)", description) ~ "adenovirus infection",
@@ -76,7 +76,7 @@ se <- SummarizedExperiment(
 
 
 rownames(se) <- counts$gene
-colnames(se) %in% meta$id
+#colnames(se) %in% meta$id
 se <- se[!is.na(rownames(se)),]
 saveRDS(se, paste0("data/ses/", GEO_accs, "_se.RDS"))
 

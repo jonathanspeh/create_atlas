@@ -38,9 +38,9 @@ meta <- pData(sm[[1]]) |>
            grepl("Control", group) ~ "healthy"),
          tb_type = stringr::str_remove(`characteristics_ch1.4`, "tb_disease_type: "),
          dataset = GEO_accs,
-         pediatric = FALSE,
          sample_type = paste(source_name_ch1, timepoint, collapse = "_"),
          age = stringr::str_remove(`characteristics_ch1.10`, "age_at_baseline_visit: "),
+         pediatric = age < 18,
          sex = stringr::str_remove(`characteristics_ch1.9`, "gender: ")) |>
   dplyr::select(id, individual, sample_name, sample_type, age, pediatric,sex, group, 
                 disease, processing_info, source, dataset, timepoint)
