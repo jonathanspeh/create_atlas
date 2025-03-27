@@ -36,7 +36,7 @@ combine_se <- function(se_list, common_only = TRUE){
   
   ### Combine sample informations 
   coldata_list <- lapply(se_list, colData)
-  coldata_list <- lapply(coldata_list, dplyr::as_tibble)  
+  coldata_list <- lapply(coldata_list, as.data.frame)  
   coldata_list <- lapply(coldata_list, function(x) {x$age = as.integer(x$age); x})
   
   ## could use this for cleaner metadata - only use columns that are in all 
@@ -67,16 +67,18 @@ combine_se <- function(se_list, common_only = TRUE){
     assay_list <- lapply(assay_list, dplyr::filter, gene %in% common_genes)
   }
   
-  combined_assay <- purrr::reduce(assay_list, dplyr::full_join, by = "gene")
+  combined_assay <- purrr::reduce(assay_list, dplyr::full_join, by = "gene") 
+  assay_mat <- as.matrix(combined_assay[,-1])
+  rownames(assay_mat) <- combined_assay$gene
   
-  stopifnot("All counts must be integer" = all(round(combined_assay[,-1]) == combined_assay[,-1]))
-  
-  
+  stopifnot(
+    "Rownames of metadata and colnames of assay must be equal" = all(rownames(combined_meta) == colnames(assay_mat)),
+    "All counts must be integer" = all(round(combined_assay[,-1]) == combined_assay[,-1], na.rm = TRUE))
+    
   combined_se <- SummarizedExperiment::SummarizedExperiment(
-    assays = list("counts" = combined_assay[,-1]),
+    assays = list("counts" = assay_mat),
     colData = combined_meta)
-  rownames(combined_se) <- combined_assay$gene
-  colnames(combined_se) <- combined_meta$id
+ 
   combined_se
 }
 

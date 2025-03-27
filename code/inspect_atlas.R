@@ -316,3 +316,12 @@ p1 |>
   
   cowplot::ggdraw()
 
+
+
+colData(combined_se) |>
+  as_tibble() |>
+  count(disease) |>
+  arrange(desc(n)) |>
+  print(n = 20)
+
+

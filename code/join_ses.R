@@ -12,6 +12,11 @@ files <- files[grepl("_se.RDS", files)]
 counts_list <- lapply(files, readRDS)
 combined_se <- combine_se(counts_list)
 
+
+
+all(rownames(colData(combined_se)) == colData(combined_se)$id)
+
+
 saveRDS(combined_se, here::here("data", "ses", "combined_atlas.RDS"))
 
 adult_se <- combined_se[,!colData(combined_se)$pediatric]
