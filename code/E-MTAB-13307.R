@@ -31,8 +31,6 @@ colnames(meta) <- janitor::make_clean_names(colnames(meta))
 meta$source_name <- janitor::make_clean_names(meta$source_name)
 colnames(counts) <- paste0(GEO_accs, "_", janitor::make_clean_names(colnames(counts)))
 
-meta$factor_value_pathogen
-
 meta <- meta[rep(c(T,F), nrow(meta)/2),] |> 
   rowwise() |>
   mutate(processing_info = list(across(everything()))) |>
@@ -59,6 +57,10 @@ meta <- meta[rep(c(T,F), nrow(meta)/2),] |>
   ) |>
   dplyr::select(id, sample_name, age, sex, pediatric, disease, processing_info, source, dataset)
 
+rownames(meta) <- meta$id
+
+counts <- counts |> dplyr::select("E-MTAB-13307_gene", meta$id)
+all(rownames(meta) == colnames(counts)[-1])
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts[,-1])),
@@ -70,5 +72,7 @@ se <- SummarizedExperiment(
 rownames(se) <- counts$`E-MTAB-13307_gene`
 
 se <- se[!is.na(rownames(se)),]
+
+
 
 saveRDS(se, paste0("data/ses/", GEO_accs, "_se.RDS"))

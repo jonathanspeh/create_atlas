@@ -22,8 +22,9 @@ if(!file.exists(tar_path)){
   }
 
 
-
 sm <- getGEO(GEO_accs, destdir = dir_path)
+#sm <- getGEO(filename = here::here(dir_path, "GSE158163_series_matrix.txt.gz"))
+
 
 meta <- pData(sm[[1]]) |> 
   rowwise() |>
@@ -67,6 +68,9 @@ read_counts <- function(name){
 counts_list <- lapply(files, read_counts)
 counts <- purrr::reduce(counts_list, full_join, by = "gene") 
 
+rownames(meta) <- meta$id
+
+all(rownames(meta)==colnames(counts)[-1])
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts[,-1])),

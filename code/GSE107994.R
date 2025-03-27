@@ -17,10 +17,6 @@ curl::curl_download(download,
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
-
-unique(pData(sm[[1]])$characteristics_ch1.1)
-
-
 meta <- pData(sm[[1]]) |> 
   rowwise() |>
   mutate(processing_info = list(across(everything()))) |>
@@ -46,14 +42,18 @@ meta <- pData(sm[[1]]) |>
                 disease, processing_info, source, dataset, timepoint)
 
 
-counts_raw <- readxl::read_excel(here::here(dir_path, file))
+counts_raw <- readxl::read_excel(here::here(dir_path, file))  |> 
+  rename_at(vars(meta$sample_name), ~ meta$id)
 
-meta$timepoint
+rownames(meta) <- meta$id
+
+all(rownames(meta) == colnames(counts_raw)[-c(1,2,3)])
 
 # Filter on baseline
 meta_bl <- dplyr::filter(meta, grepl("Baseline", timepoint))
-counts_bl <-  dplyr::select(counts_raw, c(Genes, meta_bl$sample_name))
+counts_bl <-  dplyr::select(counts_raw, c(Genes, meta_bl$id))
 
+all(rownames(meta_bl) == colnames(counts_bl)[-c(1)])
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_bl[,-1])),

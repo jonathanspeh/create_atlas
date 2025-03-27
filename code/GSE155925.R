@@ -62,8 +62,12 @@ meta <- pData(sm[[1]]) |>
 
 
 counts <- fread(file_path) |>
-  separate_wider_delim(V1, delim = ":", names = c("gene.name", "ENS.Symbol"))
+  separate_wider_delim(V1, delim = ":", names = c("gene.name", "ENS.Symbol")) |> 
+  rename_at(vars(meta$sample_name), ~ meta$id)
 
+
+rownames(meta) <- meta$id
+all(rownames(meta) == colnames(counts)[-c(1,2)])
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts[,-c(1,2)])),

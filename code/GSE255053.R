@@ -4,7 +4,7 @@ library(SummarizedExperiment)
 library(EnsDb.Hsapiens.v86)
 library(dplyr)
 library(tidyr)
-library(stringr)
+
 
 GEO_accs <- "GSE255053"
 download <- "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE255053&format=file"
@@ -69,9 +69,12 @@ read_counts <- function(name){
 counts_list <- lapply(files, read_counts)
 counts <- purrr::reduce(counts_list, full_join, by = "gene") 
 
+rownames(meta) <- meta$id
 
-meta_active = filter(meta, disease == "Malaria")
-counts_active = select(counts, all_of(c("gene", meta_active$id)))
+all(rownames(meta) == colnames(counts)[-1])
+
+meta_active = dplyr::filter(meta, disease == "Malaria")
+counts_active = dplyr::select(counts, all_of(c("gene", meta_active$id)))
 
 
 se <- SummarizedExperiment(
@@ -83,7 +86,7 @@ se <- SummarizedExperiment(
 
 
 
-rownames(se) <- str_remove(counts_active$gene, "\\.[0-9]*") # gene names have some suffices
+rownames(se) <- stringr::str_remove(counts_active$gene, "\\.[0-9]*") # gene names have some suffices
 
 se <- se[!is.na(rownames(se)),]
 saveRDS(se, paste0("data/ses/", GEO_accs, "_se.RDS"))

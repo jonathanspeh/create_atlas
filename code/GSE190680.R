@@ -76,7 +76,7 @@ meta_point1 <- dplyr::filter(meta, sampling_point == 1)
 
 
 counts_point1 <-  dplyr::select(counts_raw, c(gene, meta_point1$id))
-
+rownames(meta_point1) <- meta_point1$id
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_point1[,-1])),
@@ -94,7 +94,6 @@ rownames(se) <- mapIds(EnsDb.Hsapiens.v86,
                        columns = "ENSEMBL")
 
 se <- se[!is.na(rownames(se)),]
-
 
 saveRDS(se, "data/ses/GSE190680_se.RDS")
 

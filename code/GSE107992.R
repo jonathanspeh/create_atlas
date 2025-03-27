@@ -16,6 +16,8 @@ curl::curl_download(download,
                     destfile = here::here(dir_path, file))
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
+sm <- getGEO(filename = here::here(dir_path, "GSE107992_series_matrix.txt.gz"))
+
 
 meta <- pData(sm[[1]]) |> 
   rowwise() |>
@@ -39,12 +41,19 @@ meta <- pData(sm[[1]]) |>
                 disease, processing_info, source, dataset)
 
 
-counts_raw <- readxl::read_excel(here::here(dir_path, file))
+counts_raw <- readxl::read_excel(here::here(dir_path, file)) |> 
+  rename_at(vars(meta$sample_name), ~ meta$id)
+
+rownames(meta) <- meta$id
+
+all(rownames(meta) == colnames(counts_raw)[-c(1,2,3)])
+
+
 
 # Filter only active tb?
 meta_active <- dplyr::filter(meta, disease == "Tuberculosis")
-counts_active <-  dplyr::select(counts_raw, c(Genes, meta_active$sample_name))
-
+counts_active <-  dplyr::select(counts_raw, c(Genes, meta_active$id))
+all(rownames(meta_active) == colnames(counts_active)[-c(1)])
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_raw[,-c(1,2,3)])),

@@ -54,6 +54,11 @@ meta_fixed <- meta[rep(c(T,F), 411),] |>
   dplyr::select(id, sample_name, age_month, age, sex, pediatric, disease, processing_info, source, dataset)
 
 rownames(counts) <- counts$`E-MTAB-11671_gene`
+rownames(meta_fixed) <- meta_fixed$id
+
+counts <- counts |> dplyr::select(`E-MTAB-11671_gene`, meta_fixed$id)
+
+all(rownames(meta_fixed) == colnames(counts)[-1])
 
 
 se <- SummarizedExperiment(

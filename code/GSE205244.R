@@ -18,10 +18,10 @@ dir_path <- paste0(here::here("data", GEO_accs), "/")
 # untar(here::here("data", file), 
 #       exdir = dir_path)
 
-sm <- getGEO(GEO_accs, destdir = dir_path)
+sm <- getGEO(filename = here::here(dir_path, "GSE205244_series_matrix.txt.gz"))
 
 
-meta <- pData(sm[[1]]) |> 
+meta <- pData(sm) |> 
   rowwise() |>
   mutate(processing_info = list(across(everything()))) |>
   ungroup() |>
@@ -56,7 +56,8 @@ counts_raw <- purrr::reduce(counts, full_join, by = "gene")
 meta_point1 <- dplyr::filter(meta, sampling_point == 1)
 counts_point1 <-  dplyr::select(counts_raw, c(gene, meta_point1$id))
 
-
+rownames(meta) <- meta$id
+rownames(meta) %in% colnames(counts_raw)
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_point1[,-1])),

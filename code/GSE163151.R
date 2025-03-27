@@ -85,6 +85,9 @@ meta_wb <- meta_wb |>
                      grepl("Klebsiella ox", disease) ~ "klebsiella oxytoca infection",
                      TRUE ~ disease))
 
+rownames(meta_wb) <- meta_wb$id
+all(rownames(meta_wb) == colnames(counts_wb)[-1])
+
 
 se <- SummarizedExperiment(
   assays = list(counts = as.matrix(counts_wb[,-1])),

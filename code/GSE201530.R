@@ -57,6 +57,7 @@ counts <- lapply(files, read_counts)
 
 counts_raw <- purrr::reduce(counts, full_join, by = "gene") 
 
+rownames(meta) <- meta$id
 
 
 se <- SummarizedExperiment(
