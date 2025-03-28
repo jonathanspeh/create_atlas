@@ -45,7 +45,7 @@ meta <- pData(sm[[1]]) |>
          dataset = GEO_accs, 
          pediatric = TRUE,
          age_month = as.numeric(`age (months):ch1`),
-         age = round(as.numeric(age_month) / 12)
+         age = floor(as.numeric(age_month) / 12)
          #      processing_info = paste(
          # "growth_protocol:", growth_protocol_ch1,
          # "extract_protocol:", extract_protocol_ch1,

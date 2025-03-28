@@ -16,7 +16,7 @@ curl::curl_download(download,
                     destfile = here::here(dir_path, file))
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
-sm <- getGEO(filename = here::here(dir_path, "GSE107992_series_matrix.txt.gz"))
+#sm <- getGEO(filename = here::here(dir_path, "GSE107992_series_matrix.txt.gz"))
 
 
 meta <- pData(sm[[1]]) |> 

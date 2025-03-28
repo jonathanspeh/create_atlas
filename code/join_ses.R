@@ -12,18 +12,14 @@ files <- files[grepl("_se.RDS", files)]
 counts_list <- lapply(files, readRDS)
 combined_se <- combine_se(counts_list)
 
-
-
-all(rownames(colData(combined_se)) == colData(combined_se)$id)
-
-
 saveRDS(combined_se, here::here("data", "ses", "combined_atlas.RDS"))
 
 adult_se <- combined_se[,!colData(combined_se)$pediatric]
 ped_se <- combined_se[,colData(combined_se)$pediatric]
 
-sample_cor <- cor(assay(combined_se, "counts"))
+sample_cor <- cor(assay(combined_se, "counts"), use = "na.or.complete")
 
+# p1 <- 
 as_tibble(sample_cor, rownames = "x") |>
   tidyr::pivot_longer(!x, names_to = "y") |>
   left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
@@ -42,6 +38,51 @@ as_tibble(sample_cor, rownames = "x") |>
   ggnewscale::new_scale_fill() #+ 
   #geom_tile(aes(x = -10, fill = pediatric, width = 10)) + 
   #scale_fill_brewer(palette = "Set1") 
+
+ggsave(here::here("results", "ggall.png"))
+
+as_tibble(sample_cor, rownames = "x") |>
+  tidyr::pivot_longer(!x, names_to = "y") |>
+  left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
+  dplyr::filter(value > .999 & x != y)
+
+as_tibble(sample_cor, rownames = "x") |>
+  tidyr::pivot_longer(!x, names_to = "y") |>
+  left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
+  dplyr::filter(value > .999 & x != y) |>
+  ggplot(aes(x = x, y = y )) +
+  geom_tile(aes(fill = value), height = 1, width = 1)  +
+  #scale_x_discrete(labels = NULL, breaks = NULL) +
+  #scale_y_discrete(labels = NULL, breaks = NULL) +
+  scale_fill_gradient2(high = "red", mid = "white", low = "blue") +
+  theme(axis.text.x=element_text(angle = -90, hjust = 0, size = 30),
+        axis.text.y=element_text(size = 30),
+        legend.text = element_text(size=20),
+        legend.title = element_text(size=20),
+        legend.key.size = unit(1, 'cm')
+        
+        ) + 
+  coord_equal() + 
+  ggnewscale::new_scale_fill() + 
+  geom_tile(aes(y = -1, fill = dataset, height = .1)) + 
+  geom_tile(aes(x = -1, fill = dataset, width = .1))
+
+ggsave(here::here("results", "high_cor.png"),
+       width = 15,
+       height = 15)
+
+as_tibble(sample_cor, rownames = "x") |>
+  tidyr::pivot_longer(!x, names_to = "y") |>
+  left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
+  dplyr::filter(value > .999 & x != y)
+
+
+assay(combined_se) |>
+  as_tibble(rownames = "gene") |>
+  dplyr::select(gene, GSM8063107, GSM8063119)
+
+
+
 
 # hirarchical clustering - all
 sample_cor <- cor(assay(combined_se, "counts"))

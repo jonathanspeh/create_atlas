@@ -27,26 +27,7 @@ if(!file.exists(file_path)){
 
 sm <- getGEO(GEO_accs, destdir = dir_path) 
 
-pData(sm[[1]]) |> dplyr::select(starts_with("char")) #|>  
-  count(source_name_ch1, characteristics_ch1.1, characteristics_ch1.2)
-
-meta <- pData(sm[[1]])
-colnames(meta)
-glimpse(meta)
-unique(meta$`source_name_ch1`)
-
-meta |> 
-  dplyr::select(title, 
-                geo_accession,  
-                `organisms:ch1`, # pathogen
-                `severity:ch1`, # disease severity 
-                `group:ch1`,    # control or diarrhea
-                `age:ch1`,    #ag egroup
-  )
-
-
-
-meta <- pData(sm[[1]]) |> 
+eta <- pData(sm[[1]]) |> 
   rowwise() |>
   mutate(processing_info = list(across(everything()))) |>
   ungroup() |>
@@ -96,7 +77,7 @@ se <- SummarizedExperiment(
                   full_counts = counts_all,
                   fill_meta = meta))
 
-all(round(assay(se)) == assay(se), na.rm = TRUE)
+all(floor(assay(se)) == assay(se), na.rm = TRUE)
 
 rownames(se) <- counts_selected$`Ensembl Gene ID`
 

@@ -55,6 +55,10 @@ combine_se <- function(se_list, common_only = TRUE){
                                          sex == "m" ~ "male",
                                          TRUE ~ sex))
   
+  combined_meta$pediatric <- as.logical(combined_meta$pediatric)
+  stopifnot("pediatric column cannot contain NA" = !is.na(combined_meta$pediatric))
+  
+  
   verify_disease(combined_meta)
   
   

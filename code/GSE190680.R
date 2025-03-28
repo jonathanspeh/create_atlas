@@ -17,6 +17,8 @@ library(tidyr)
 #      exdir = here::here("data", "GSE190680"))
 
 sm <- getGEO("GSE190680", destdir = here::here("data", "GSE190680"))
+#sm <- getGEO(filename =  here::here("data", "GSE190680", "GSE190680_series_matrix.txt.gz"))
+
 
 meta <- pData(sm$GSE190680_series_matrix.txt.gz) |> 
   rowwise() |>
@@ -33,7 +35,7 @@ meta <- pData(sm$GSE190680_series_matrix.txt.gz) |>
          individual = sub("^.*_(S\\d+).*", "\\1", sample_name),
          sampling_point = sub("^.*?(\\d+)\\D*$", "\\1", sample_name),
          disease = "COVID-19",
-         dataset = "GSE1906080",
+         dataset = "GSE190680",
          pediatric = FALSE,
          #processing_info = paste(
            # "growth_protocol:", growth_protocol_ch1,

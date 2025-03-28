@@ -12,6 +12,16 @@ adult_se <- combined_se[,!colData(combined_se)$pediatric]
 ped_se <- combined_se[,colData(combined_se)$pediatric]
 
 
+ncol(assay(adult_se)) == nrow(colData(adult_se))
+ncol(assay(ped_se)) == nrow(colData(ped_se))
+
+colData(combined_se) |>
+  as.data.frame() |>
+  dplyr::filter(pediatric == FALSE)
+
+unique(colData(ped_se)$dataset)
+
+
 # all
 selected <- as.data.frame(colData(combined_se)) |>
   count(disease) |>
@@ -110,7 +120,7 @@ pheatmap::pheatmap(sample_cor,
                    show_colnames = FALSE,
                    width = 20,
                    height = 15,
-                   filename = here::here("results", "heatmap_adult_min10.png")
+                   #filename = here::here("results", "heatmap_adult_min10.png")
 )
 
 
@@ -128,6 +138,8 @@ clusters.df <- data.frame(sample = names(clusters), cluster = clusters)
 
 
 color.scheme <- rev(RColorBrewer::brewer.pal(10,"RdBu"))
+
+
 col_annot <- meta |>
   left_join(clusters.df, by = join_by("id" == "sample")) |>
   dplyr::select(dataset, cluster) |>

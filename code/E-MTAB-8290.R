@@ -40,7 +40,7 @@ meta_fixed <- meta[rep(c(T,F), 411),] |>
   mutate(
           sample_name = id,
           id = paste0(accs, "_", id),
-          age = as.character(round(age_month/12)),
+          age = as.character(floor(age_month/12)),
           # processing_info = paste(
           #   "comment_library_layout", comment_library_layout,
           #   "comment_library_selection", comment_library_selection,
