@@ -9,17 +9,7 @@ library(dendextend)
 # Prepare #####
 combined_se <- readRDS(here::here("data", "ses", "combined_atlas.RDS"))
 adult_se <- combined_se[,!colData(combined_se)$pediatric]
-ped_se <- combined_se[,colData(combined_se)$pediatric]
-
-
-ncol(assay(adult_se)) == nrow(colData(adult_se))
-ncol(assay(ped_se)) == nrow(colData(ped_se))
-
-colData(combined_se) |>
-  as.data.frame() |>
-  dplyr::filter(pediatric == FALSE)
-
-unique(colData(ped_se)$dataset)
+ped_se <- combined_se[,as.logical(colData(combined_se)$pediatric)]
 
 
 # all
@@ -46,7 +36,7 @@ ped_min_10 <- ped_se[,colData(ped_se)$disease %in% selected$disease]
 # All diseases with at least 10 individuals
 meta <- as.data.frame(colData(combined_min_10))
 
-sample_cor <- cor(assay(combined_min_10, "counts"))
+sample_cor <- cor(assay(combined_min_10, "counts"), use = "na.or.complete")
 sample_dist <- as.dist(1-sample_cor)
 sample_tree <- hclust(sample_dist)
 sample_dend <- as.dendrogram(sample_tree)
@@ -79,13 +69,13 @@ pheatmap::pheatmap(sample_cor,
                    show_colnames = FALSE,
                    width = 20,
                    height = 15,
-                   filename = here::here("results", "heatmap_all_min10.png")
+                   #filename = here::here("results", "heatmap_all_min10.png")
                    )
 
 ## heatmaps adults #####
 
 meta <- as.data.frame(colData(adult_min_10))
-sample_cor <- cor(assay(adult_min_10, "counts"))
+sample_cor <- cor(assay(adult_min_10, "counts"), use = "na.or.complete")
 
 sample_dist <- as.dist(1-sample_cor)
 sample_tree <- hclust(sample_dist)
@@ -126,7 +116,7 @@ pheatmap::pheatmap(sample_cor,
 
 ## heatmap kids #####
 meta <- as.data.frame(colData(ped_min_10))
-sample_cor <- cor(assay(ped_min_10, "counts"))
+sample_cor <- cor(assay(ped_min_10, "counts"), use = "na.or.complete")
 
 sample_dist <- as.dist(1-sample_cor)
 sample_tree <- hclust(sample_dist)
@@ -138,7 +128,6 @@ clusters.df <- data.frame(sample = names(clusters), cluster = clusters)
 
 
 color.scheme <- rev(RColorBrewer::brewer.pal(10,"RdBu"))
-
 
 col_annot <- meta |>
   left_join(clusters.df, by = join_by("id" == "sample")) |>
@@ -163,7 +152,7 @@ pheatmap::pheatmap(sample_cor,
                    show_colnames = FALSE,
                    width = 20,
                    height = 15,
-                   filename = here::here("results", "heatmap_ped_min10.png")
+                   #filename = here::here("results", "heatmap_ped_min10.png")
 )
 
 
@@ -174,8 +163,21 @@ pheatmap::pheatmap(sample_cor,
 
 # PCA #####
 ## all #####
+
+prob <- 
+assay(use_se)[,!apply(assay(use_se), 2, function(x) all(is.finite(x)))]
+
+prob[!apply(prob, 1, function(x) all(is.finite(x))),]
+
+
+
+
+ncol(assay(use_se))
+
+
+
 use_se <- combined_se
-pca <- prcomp(t(assay(use_se , "counts")))
+pca <- prcomp(na.omit(t(assay(use_se , "counts"))))
 
 pcs_joined <- as_tibble(pca$x, rownames = "id") |>
   left_join(as.data.frame(colData(use_se)))
@@ -279,7 +281,7 @@ p1 |>
 
 ## kids #####
 use_se <- ped_se
-pca <- prcomp(t(assay(use_se , "counts")))
+pca <- prcomp(na.omit(t(assay(use_se , "counts"))))
 
 as_tibble(pca$x, rownames = "id") |>
   left_join(as.data.frame(colData(use_se))) |>
@@ -291,7 +293,7 @@ as_tibble(pca$x, rownames = "id") |>
 
 
 use_se <- ped_min_10
-pca <- prcomp(t(assay(use_se , "counts")))
+pca <- prcomp(na.omit(t(assay(use_se , "counts"))))
 
 pcs_joined <- as_tibble(pca$x, rownames = "id") |>
   left_join(as.data.frame(colData(use_se)))

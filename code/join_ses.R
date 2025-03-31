@@ -12,12 +12,16 @@ files <- files[grepl("_se.RDS", files)]
 counts_list <- lapply(files, readRDS)
 combined_se <- combine_se(counts_list)
 
+
+
 saveRDS(combined_se, here::here("data", "ses", "combined_atlas.RDS"))
 
 adult_se <- combined_se[,!colData(combined_se)$pediatric]
 ped_se <- combined_se[,colData(combined_se)$pediatric]
 
-sample_cor <- cor(assay(combined_se, "counts"), use = "na.or.complete")
+
+
+sample_cor <- cor(assay(adult_se, "counts"), use = "na.or.complete")
 
 # p1 <- 
 as_tibble(sample_cor, rownames = "x") |>
@@ -44,19 +48,25 @@ ggsave(here::here("results", "ggall.png"))
 as_tibble(sample_cor, rownames = "x") |>
   tidyr::pivot_longer(!x, names_to = "y") |>
   left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
-  dplyr::filter(value > .999 & x != y)
+  dplyr::filter(value > .999  & x != y) |>
+  select(x, y, value, dataset, disease, reanalysis, sampling_point) |>
+  slice_max(value)
+  print(n = 200)
+
+
+
 
 as_tibble(sample_cor, rownames = "x") |>
   tidyr::pivot_longer(!x, names_to = "y") |>
   left_join(as.data.frame(colData(combined_se)), by = join_by("x" == "id")) |>
-  dplyr::filter(value > .999 & x != y) |>
+  dplyr::filter(value > .99 & x != y) |>
   ggplot(aes(x = x, y = y )) +
   geom_tile(aes(fill = value), height = 1, width = 1)  +
   #scale_x_discrete(labels = NULL, breaks = NULL) +
   #scale_y_discrete(labels = NULL, breaks = NULL) +
-  scale_fill_gradient2(high = "red", mid = "white", low = "blue") +
-  theme(axis.text.x=element_text(angle = -90, hjust = 0, size = 30),
-        axis.text.y=element_text(size = 30),
+  scale_fill_gradient2(high = "red", mid = "white", low = "blue", midpoint = .995) +
+  theme(axis.text.x=element_text(angle = -90, hjust = 0, size = 10),
+        axis.text.y=element_text(size = 10),
         legend.text = element_text(size=20),
         legend.title = element_text(size=20),
         legend.key.size = unit(1, 'cm')
@@ -64,8 +74,12 @@ as_tibble(sample_cor, rownames = "x") |>
         ) + 
   coord_equal() + 
   ggnewscale::new_scale_fill() + 
-  geom_tile(aes(y = -1, fill = dataset, height = .1)) + 
-  geom_tile(aes(x = -1, fill = dataset, width = .1))
+  geom_tile(aes(y = -1, fill = dataset, height = 1)) + 
+  geom_tile(aes(x = -1, fill = dataset, width = 1)) + 
+  ggnewscale::new_scale_fill() + 
+  geom_tile(aes(y = -2, fill = disease, height = 1)) + 
+  geom_tile(aes(x = -2, fill = disease, width = 1))
+
 
 ggsave(here::here("results", "high_cor.png"),
        width = 15,

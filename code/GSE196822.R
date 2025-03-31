@@ -5,8 +5,10 @@ library(EnsDb.Hsapiens.v86)
 library(dplyr)
 library(tidyr)
 
-GEO_accs <- "GSE161731"
-download <- "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE161731&format=file&file=GSE161731%5Fcounts%2Ecsv%2Egz"
+
+# Failed - only normalised counts
+GEO_accs <- "GSE196822"
+download <- "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE196822&format=file&file=GSE196822%5FRaw%5Fcounts%5Fmatrix%2Ecsv%2Egz"
 dir_path <- here::here("data", GEO_accs)
 file_path <- here::here(dir_path, paste0(GEO_accs, ".csv.gz"))
 
@@ -30,7 +32,7 @@ pData(sm[[1]]) |>
 colnames(pData(sm[[1]]))
 glimpse(pData(sm[[1]]))
 
-unique(pData(sm[[1]])$`title`)
+unique(pData(sm[[1]])$`condition:ch1`)
 
 
 
@@ -40,30 +42,21 @@ meta <- pData(sm[[1]]) |>
   mutate(processing_info = list(across(everything()))) |>
   ungroup() |>
   dplyr::rename(id = geo_accession,
-                sample_name = title,
-                sex = "gender:ch1",
-                timepoint = `characteristics_ch1.5`,
-                group = `characteristics_ch1.5`,
-                source = `tissue:ch1`
-  ) |>
-  mutate(disease = case_when(`cohort:ch1` == "Bacterial" ~ "bacterial_pneumonia",
-                             `cohort:ch1` == "CoV other" ~ "seasonal_coronavirus_infection",
-                             TRUE ~ `cohort:ch1`), 
+                sample_name = `sequencing id:ch1`,
+                sex = `Sex:ch1`,
+                source = `source_name_ch1`) |>
+  mutate(disease = case_when(`condition:ch1` == "Healthy" ~ "healthy",
+                             grepl("Coin", `condition:ch1`) ~ "COVID-19_and_bacterial_coinfection",
+                             TRUE ~ "COVID-19"),
+         severity = stringr::str_remove(`condition:ch1`, "\\s*Covid-19\\s*"),
          age = floor(as.numeric(`age:ch1`)),
          dataset = GEO_accs, 
-         pediatric = ifelse(is.na(age), FALSE, age < 18),   # has on adult with unknown age
-         source = "whole blood",
-         sample_name = stringr::str_remove(sample_name, "whole blood, ")
-         ) |>
+         pediatric = age < 18) |>
   dplyr::select(id, sample_name, pediatric,
                 disease, 
-                processing_info, source, dataset, group, age, sex) |>
-  separate_longer_delim(sample_name, ", ") # Has some strange duplication going on
+                processing_info, source, dataset, age, sex, severity) 
 
-
-
-counts <- fread(file_path) |> rename("gene" = V1)
-
+counts <- fread(file_path) 
 
 counts <- counts |> 
   dplyr::select(gene, any_of(meta$sample_name)) #
@@ -91,10 +84,4 @@ all(floor(assay(se)) == assay(se), na.rm = TRUE)
 rownames(se) <- counts$gene
 
 se <- se[!is.na(rownames(se)),]
-saveRDS(se, paste0("data/ses/", GEO_accs, "_se.RDS"))
-
-
-
-
-
-
+#saveRDS(se, paste0("data/ses/", GEO_accs, "_se.RDS"))
