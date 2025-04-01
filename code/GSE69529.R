@@ -27,7 +27,7 @@ if(!file.exists(file_path)){
 
 sm <- getGEO(GEO_accs, destdir = dir_path) 
 
-eta <- pData(sm[[1]]) |> 
+meta <- pData(sm[[1]]) |> 
   rowwise() |>
   mutate(processing_info = list(across(everything()))) |>
   ungroup() |>

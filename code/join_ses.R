@@ -12,6 +12,21 @@ files <- files[grepl("_se.RDS", files)]
 counts_list <- lapply(files, readRDS)
 combined_se <- combine_se(counts_list)
 
+# add platform and genome assembly to dataset
+# TODO - unify assempbly annotation
+colData(combined_se) <- 
+  colData(combined_se) |>
+  as.data.frame() |>
+  mutate(platform_id = purrr::map_chr(processing_info, ~ stringr::str_extract(paste(.x[1,], collapse = ""), "(?i)(GPL)\\s*\\d+")),
+         genome = purrr::map_chr(processing_info, ~ stringr::str_extract(paste(.x[1,], collapse = ""), "(?i)(hg|grch|gch)\\s*\\d+"))
+  ) |>
+  mutate(platform_id = ifelse(dataset == "E-MTAB-11671" | dataset == "E-MTAB-13307", "GPL20301", platform_id),
+         genome = ifelse(dataset == "E-MTAB-11671" | dataset == "E-MTAB-13307", "GCh38", genome)) |>
+  mutate(genome = case_when(grepl("38", genome) ~ "GRCh38",
+                            grepl("(19|37)", genome) ~ "GRCh37",
+                            
+                            )) |>
+  DataFrame()
 
 
 saveRDS(combined_se, here::here("data", "ses", "combined_atlas.RDS"))
