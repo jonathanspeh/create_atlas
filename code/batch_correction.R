@@ -17,6 +17,12 @@ adjusted_counts <- ComBat_seq(counts,
                               group=group, 
                               full_mod=TRUE)
 
+adjusted_counts_no_group <- ComBat_seq(counts, 
+                              batch=batch, 
+                              group=NULL, 
+                              full_mod=FALSE)
+
+
 
 pca_raw_obj = prcomp(t(counts))
 pca_raw_join <- as_tibble(pca_raw_obj$x, rownames = "id") |>
@@ -24,6 +30,10 @@ pca_raw_join <- as_tibble(pca_raw_obj$x, rownames = "id") |>
 
 pca_adjusted_obj = prcomp(t(adjusted_counts))
 pca_adjusted_join <- as_tibble(pca_adjusted_obj$x, rownames = "id") |>
+  left_join(meta)
+
+pca_adjusted_no_group_obj = prcomp(t(adjusted_counts_no_group))
+pca_adjusted_no_group_join <- as_tibble(pca_adjusted_no_group_obj$x, rownames = "id") |>
   left_join(meta)
 
 
@@ -54,13 +64,27 @@ p2_adj <- pca_adjusted_join |>
   #stat_ellipse() +
   ggtitle("adjusted")
 
+
+p1_adj_no_group <- pca_adjusted_no_group_join |>
+  ggplot(aes(x = -PC1, y = PC2, colour = dataset)) +
+  geom_point() +  
+  #stat_ellipse() +
+  ggtitle("adjusted - no group variable")
+
+p2_adj_no_group <- pca_adjusted_no_group_join |>
+  ggplot(aes(x = -PC1, y = PC2, colour = disease)) +
+  geom_point() +
+  #stat_ellipse() +
+  ggtitle("adjusted - no group variable")
+
+
+
 cowplot::plot_grid(p1, p2, ncol =1)
 cowplot::plot_grid(p1_adj, p2_adj, ncol =1)
+cowplot::plot_grid(p1_adj_no_group, p2_adj_no_group, ncol =1)
 
-cowplot::plot_grid(p1, p1_adj, ncol =1)
-cowplot::plot_grid(p2, p2_adj, ncol =1)
-
-
+cowplot::plot_grid(p1, p1_adj, p1_adj_no_group, ncol =1)
+cowplot::plot_grid(p2, p2_adj, p2_adj_no_group, ncol =1)
 
 
 plot_pc_density <- function(group, dataset, PC="PC1") {
@@ -84,9 +108,14 @@ plots_adjusted <- lapply(c("disease", "dataset"),
                     plot_pc_density, 
                     dataset = pca_adjusted_join, 
                     PC = "PC1")
-
 cowplot::plot_grid(plotlist = plots_adjusted, ncol = 1) 
 
+
+plots_adjusted_no_group <- lapply(c("disease", "dataset"), 
+                         plot_pc_density, 
+                         dataset = pca_adjusted_no_group_join, 
+                         PC = "PC1")
+cowplot::plot_grid(plotlist = plots_adjusted_no_group, ncol = 1) 
 
 
 
@@ -94,16 +123,155 @@ plots_raw_2 <- lapply(c("PC1", "PC2", "PC3", "PC4"),
                     plot_pc_density, 
                     group = "dataset",
                     dataset = pca_raw_join)
-
-cowplot::plot_grid(plotlist = plots_raw_2, ncol = 2) 
+cowplot::plot_grid(plotlist = plots_raw_2, ncol = 1) 
 
 
 plots_adjusted_2 <- lapply(c("PC1", "PC2", "PC3", "PC4"), 
                          plot_pc_density, 
                          group = "dataset",
                          dataset = pca_adjusted_join)
-
 cowplot::plot_grid(plotlist = plots_adjusted_2, ncol = 1) 
+
+
+plots_adjusted_no_group_2 <- lapply(c("PC1", "PC2", "PC3", "PC4"), 
+                           plot_pc_density, 
+                           group = "dataset",
+                           dataset = pca_adjusted_no_group_join)
+
+cowplot::plot_grid(plotlist = plots_adjusted_no_group_2, ncol = 1) 
+
+
+
+raw_cor <- cor(counts)
+
+raw_dist <- as.dist(1-raw_cor)
+raw_tree <- hclust(raw_dist)
+raw_dend <- as.dendrogram(raw_tree)
+
+
+clusters_raw <- cutree(raw_dend, k = 5)
+clusters.df_raw <- data.frame(sample = names(clusters_raw), cluster = clusters_raw)
+
+col_annot_raw <- meta |>
+  left_join(clusters.df_raw, by = join_by("id" == "sample")) |>
+  dplyr::select(dataset, cluster) |>
+  mutate(cluster = factor(cluster))
+
+rownames(col_annot_raw) <- rownames(meta)
+
+row_annot <- meta |>
+  dplyr::select(disease) 
+
+color.scheme <- rev(RColorBrewer::brewer.pal(10,"RdBu"))
+pheatmap::pheatmap(raw_cor,
+                   color = color.scheme,
+                   cluster_rows = raw_tree,
+                   cluster_cols = raw_tree,
+                   annotation_col = col_annot_raw, 
+                   annotation_row = row_annot,
+                   #annotation_legend = FALSE,
+                   legend = FALSE,
+                   show_rownames = FALSE,
+                   show_colnames = FALSE,
+)
+
+
+
+
+
+adjusted_cor <- cor(adjusted_counts)
+
+adjusted_dist <- as.dist(1-adjusted_cor)
+adjusted_tree <- hclust(adjusted_dist)
+adjusted_dend <- as.dendrogram(adjusted_tree)
+
+
+clusters_adjusted <- cutree(adjusted_dend, k = 5)
+clusters.df_adjusted <- data.frame(sample = names(clusters_adjusted), cluster = clusters_adjusted)
+
+col_annot_adjusted <- meta |>
+  left_join(clusters.df_adjusted, by = join_by("id" == "sample")) |>
+  dplyr::select(dataset, cluster) |>
+  mutate(cluster = factor(cluster))
+
+rownames(col_annot_adjusted) <- rownames(meta)
+
+row_annot <- meta |>
+  dplyr::select(disease) 
+
+color.scheme <- rev(RColorBrewer::brewer.pal(10,"RdBu"))
+pheatmap::pheatmap(adjusted_cor,
+                   color = color.scheme,
+                   cluster_rows = adjusted_tree,
+                   cluster_cols = adjusted_tree,
+                   annotation_col = col_annot_adjusted, 
+                   annotation_row = row_annot,
+                   #annotation_legend = FALSE,
+                   legend = FALSE,
+                   show_rownames = FALSE,
+                   show_colnames = FALSE,
+)
+
+
+
+
+
+adjusted_no_group_cor <- cor(adjusted_counts_no_group)
+
+adjusted_no_group_dist <- as.dist(1-adjusted_no_group_cor)
+adjusted_no_group_tree <- hclust(adjusted_no_group_dist)
+adjusted_no_group_dend <- as.dendrogram(adjusted_no_group_tree)
+
+
+clusters_adjusted_no_group <- cutree(adjusted_no_group_dend, k = 5)
+clusters.df_adjusted_no_group <- data.frame(sample = names(clusters_adjusted_no_group),
+                                            cluster = clusters_adjusted_no_group)
+
+col_annot_adjusted_no_group <- meta |>
+  left_join(clusters.df_adjusted_no_group, 
+            by = join_by("id" == "sample")) |>
+  dplyr::select(dataset, cluster) |>
+  mutate(cluster = factor(cluster))
+
+rownames(col_annot_adjusted_no_group) <- rownames(meta)
+
+row_annot <- meta |>
+  dplyr::select(disease) 
+
+color.scheme <- rev(RColorBrewer::brewer.pal(10,"RdBu"))
+pheatmap::pheatmap(adjusted_no_group_cor,
+                   color = color.scheme,
+                   cluster_rows = adjusted_no_group_tree,
+                   cluster_cols = adjusted_no_group_tree,
+                   annotation_col = col_annot_adjusted_no_group, 
+                   annotation_row = row_annot,
+                   #annotation_legend = FALSE,
+                   legend = FALSE,
+                   show_rownames = FALSE,
+                   show_colnames = FALSE,
+)
+
+
+
+batch
+mod0 <- model.matrix(~batch, data = meta) # could also add platform as covariate
+mod1 <- model.matrix(~disease + batch + platform_id, data = meta)
+
+counts_sv <- svaseq(counts, 
+                    mod = mod1, 
+                    mod0 = mod0,
+                    method = "irw"
+                    )
+
+
+adju_sv <- svaseq(adjusted_counts, 
+                    mod = mod1, 
+                    mod0 = mod0,
+                    method = "irw"
+)
+
+plot(counts_sv$sv[,1])
+
 
 
 
