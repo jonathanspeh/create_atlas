@@ -4,6 +4,7 @@ library(ggplot2)
 #library(gplots)
 library(pheatmap)
 library(dendextend)
+library(sva)
 
 combined_se <- readRDS(here::here("data", "ses", "combined_atlas.RDS"))
 disease_info <- readxl::read_xlsx(here::here("data", "curated_diseases.xlsx"))
@@ -345,7 +346,7 @@ pca_no_hg19 <- as_tibble(pca_no_hg19$x, rownames = "id") |>
   left_join(as.data.frame(colData(adult_selected_no_hg19)))
 
 
-plots <- lapply(to_plot, 
+plots <- lapply(c(to_plot), 
                 plot_pc_density, 
                 dataset = pca_no_hg19, 
                 PC = "PC1")
@@ -410,5 +411,49 @@ colData(adult_selected_no_hg19) |>
   flextable::set_caption("adult samples") |>
   flextable::add_footer_lines("All diseases with at least 10 samples and 2 or more datasets where the pathogen is known and the assembly is hg38")
 
+
+meta <- colData(adult_selected_no_hg19)
+batch <- as.numeric(factor(meta$dataset))
+group <- as.numeric(factor(meta$disease))
+counts <- assay(adult_selected_no_hg19)
+
+adjusted_counts <- ComBat_seq(counts, 
+                              batch=batch, 
+                              group=group, 
+                              full_mod=TRUE)
+
+adjusted_counts_no_group <- ComBat_seq(counts, 
+                                       batch=batch, 
+                                       group=NULL, 
+                                       full_mod=FALSE)
+
+assays(adult_selected_no_hg19) <- list(counts = assay(adult_selected_no_hg19), 
+                                       combat_seq = adjusted_counts,
+                                       combat_seq_null = adjusted_counts_no_group)
+
+
+pca_combat <- prcomp(na.omit(t(assay(adult_selected_no_hg19 , "combat_seq"))))
+pca_combat <- as_tibble(pca_combat$x, rownames = "id") |>
+  left_join(as.data.frame(colData(adult_selected_no_hg19)))
+
+
+plots <- lapply(c(pca_combat, pca_no_hg19), 
+                plot_pc_density, 
+                group = "dataset", 
+                PC = "PC1")
+
+plot_pc_density("dataset", pca_no_hg19)
+pca_combat |>
+  ggplot(aes(x = PC1, y = PC2, colour = dataset)) +
+  geom_point()
+
+
+cowplot::plot_grid(plotlist = plots, ncol = 1)
+
+assays(adult_selected_no_hg19)$combat_seq
+
 saveRDS(adult_selected_no_hg19, here::here("data", "ses", "selected_adult_no_hg19.RDS"))
+adult_selected_no_hg19 <- readRDS(here::here("data", "ses", "selected_adult_no_hg19.RDS"))
+
+
 
