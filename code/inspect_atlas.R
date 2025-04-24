@@ -339,3 +339,154 @@ colData(combined_se) |>
   print(n = 20)
 
 
+colData(combined_se) |>
+  as_tibble() |>
+  group_by(disease, dataset) |>
+  tally() |>
+  group_by(disease) |>
+  summarise(n = sum(n),
+            n_datasets = n()) |>
+  arrange(desc(n)) |>
+  dplyr::filter(n >= 10)  |>
+  flextable::flextable() -> ft_all
+
+
+colData(combined_se) |>
+  as.data.frame() |>
+  dplyr::count(pediatric) |>
+  nrow()
+
+
+## Combat - full atlas
+
+
+
+
+counts <- assay(combined_se)
+counts <- counts[!is.na(rowSums(counts)),]
+
+
+meta <- as.data.frame(colData(combined_se)) |>
+  filter(id %in% colnames(counts),
+         grepl("38", genome))
+
+
+counts <- counts[, colnames(counts)  %in% meta$id]
+
+dim(counts)
+
+batch <- as.numeric(factor(meta$dataset))
+group <- as.numeric(factor(meta$disease))
+
+
+#adjusted_counts <- ComBat_seq(counts, 
+#                              batch=batch, 
+#                              group=group, 
+#                              full_mod=TRUE)
+
+adjusted_counts_no_group <- ComBat_seq(counts, 
+                                       batch=batch, 
+                                       group=NULL, 
+                                       full_mod=FALSE)
+
+
+pca <- prcomp(t(counts))
+pca_combat <- prcomp(t(adjusted_counts_no_group))
+
+
+pca_raw_join <- as_tibble(pca$x, rownames = "id") |>
+  left_join(meta) |>
+  filter(!is.na(pediatric))
+
+pca_combat_join <- as_tibble(pca_combat$x, rownames = "id") |>
+  left_join(meta)
+
+
+plot_pc_density <- function(group, dataset, PC="PC1") {
+  dataset |>
+    ggplot(aes(x = !!sym(PC), fill = !!sym(group), color = !!sym(group))) +
+    geom_density(alpha = .5) + 
+    ggtitle(group) #+
+    #theme(legend.title=element_blank())
+}
+
+
+pc_kdes <- lapply(c("PC1", "PC2", "PC3", "PC4"),
+       plot_pc_density,
+       dataset = pca_raw_join,
+       group = "pediatric"
+       )
+
+cowplot::plot_grid(plotlist = pc_kdes)
+
+plot_pc_density("pediatric", pca_raw_join, "PC6") +
+  ggtitle("raw")
+
+
+
+plot_pc_density("dataset", pca_combat_join, "PC1") +
+  ggtitle("combat-seq")
+
+
+p1 <- pca_raw_join |>
+  ggplot(aes(PC1, PC2, colour = disease, 
+             #shape = disease
+  )) +
+  geom_point(size = 1.5) +
+  theme(legend.position = "none")
+
+xdens <-
+  cowplot::axis_canvas(p1, axis = "x") +
+  geom_density(data = pca_raw_join, 
+               aes(PC1, fill = dataset, colour = dataset), 
+               alpha = .3)
+
+ydens <- 
+  cowplot::axis_canvas(p1, axis = "y", coord_flip = TRUE) +
+  geom_density(data = pca_raw_join, 
+               aes(PC2, fill = dataset, colour = dataset), 
+               alpha = .3) +
+  coord_flip()
+
+p1 |>
+  cowplot::insert_xaxis_grob(xdens, 
+                             grid::unit(1, "cm"), 
+                             position = "top") |>
+  cowplot::insert_yaxis_grob(ydens, 
+                             grid::unit(2, "cm"), 
+                             position = "right") |>
+  
+  cowplot::ggdraw()
+
+
+
+p1 <- pca_combat_join |>
+  ggplot(aes(PC1, PC2, colour = disease, 
+             #shape = disease
+  )) +
+  geom_point(size = 1.5) +
+  theme(legend.position = "none")
+
+xdens <-
+  cowplot::axis_canvas(p1, axis = "x") +
+  geom_density(data = pca_combat_join, 
+               aes(PC1, fill = dataset, colour = dataset), 
+               alpha = .3)
+
+ydens <- 
+  cowplot::axis_canvas(p1, axis = "y", coord_flip = TRUE) +
+  geom_density(data = pca_combat_join, 
+               aes(PC2, fill = dataset, colour = dataset), 
+               alpha = .3) +
+  coord_flip()
+
+p1 |>
+  cowplot::insert_xaxis_grob(xdens, 
+                             grid::unit(1, "cm"), 
+                             position = "top") |>
+  cowplot::insert_yaxis_grob(ydens, 
+                             grid::unit(2, "cm"), 
+                             position = "right") |>
+  
+  cowplot::ggdraw()
+

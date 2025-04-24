@@ -38,6 +38,20 @@ pca_adjusted_no_group_join <- as_tibble(pca_adjusted_no_group_obj$x, rownames = 
 
 
 
+pca_raw_obj_healthy = prcomp(t(counts[, filter(meta, disease == "healthy")$id]))
+pca_raw_join_healthy <- as_tibble(pca_raw_obj_healthy$x, rownames = "id") |>
+  left_join(meta)
+
+pca_adjusted_obj_healthy = prcomp(t(adjusted_counts[, filter(meta, disease == "healthy")$id]))
+pca_adjusted_join_healthy <- as_tibble(pca_adjusted_obj_healthy$x, rownames = "id") |>
+  left_join(meta)
+
+pca_adjusted_no_group_obj_healthy = prcomp(t(adjusted_counts_no_group[, filter(meta, disease == "healthy")$id]))
+pca_adjusted_no_group_join_healthy <- as_tibble(pca_adjusted_no_group_obj_healthy$x, rownames = "id") |>
+  left_join(meta)
+
+
+
 
 p1 <- pca_raw_join |>
   ggplot(aes(x = PC1, y = PC2, colour = dataset)) +
@@ -94,6 +108,18 @@ plot_pc_density <- function(group, dataset, PC="PC1") {
     ggtitle(group) +
     theme(legend.title=element_blank())
 }
+
+plot_pc_density("dataset", filter(pca_raw_join, disease == "healthy"))
+plot_pc_density("dataset", pca_raw_join_healthy) +
+  ggtitle("Healthy controls - no adjustment")
+
+plot_pc_density("dataset", filter(pca_adjusted_join, disease == "healthy"))
+plot_pc_density("dataset", pca_adjusted_join_healthy)
+
+plot_pc_density("dataset", filter(pca_adjusted_no_group_join, disease == "healthy"))
+plot_pc_density("dataset", pca_adjusted_no_group_join_healthy) + 
+  ggtitle("Healthy controls - combat-seq")
+
 
 
 plots_raw <- lapply(c("disease", "dataset"), 
@@ -272,7 +298,33 @@ adju_sv <- svaseq(adjusted_counts,
 
 plot(counts_sv$sv[,1])
 
+library(factoextra)
+
+fviz_eig(pca_raw_obj)
+fviz_eig(pca_adjusted_obj)
+fviz_eig(pca_adjusted_no_group_obj)
 
 
+raw_var <- get_pca_var(pca_raw_obj)
+raw_var$coord
+raw_var$contrib[1:10, 1:10]
+raw_var$contrib |>
+  as_tibble(rownames = "gene") |>
+  filter(Dim.1 > 0.1) |>
+  ggplot(aes(x = reorder(gene, Dim.1), 
+             y = Dim.1
+             )) +
+  geom_point()
 
+    raw_var$cos2   
+    
+fviz_contrib(pca_raw_obj, choice = "var", axes = 1, top = 10)
+
+#TODO - GSEA on PC1 contributions - it's kind of an ordered list
+
+#Results for individuals
+raw_ind <- get_pca_ind(pca_raw_obj)
+raw_ind$coord          
+raw_ind$contrib        
+raw_ind$cos2
 

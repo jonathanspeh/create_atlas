@@ -78,7 +78,8 @@ adult_selected <- colData(adult_se) |>
   arrange(desc(n)) |>
   dplyr::filter(n >= 10,
                 n_datasets >= 2,
-                pathogen_curated != "unknown_pathogen") 
+                #pathogen_curated != "unknown_pathogen"
+                ) 
 
 ped_selected <- colData(ped_se) |>
   as_tibble() |>
