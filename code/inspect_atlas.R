@@ -56,20 +56,19 @@ rownames(col_annot) <- rownames(meta)
 row_annot <- meta |>
   dplyr::select(disease) 
 
-
 pheatmap::pheatmap(sample_cor,
                    color = color.scheme,
-                   cluster_rows = sample_tree,
+                   #cluster_rows = sample_tree,
                    cluster_cols = sample_tree,
                    annotation_col = col_annot, 
-                   annotation_row = row_annot,
-                   #annotation_legend = FALSE,
-                   legend = TRUE,
+                   #annotation_row = row_annot,
+                   annotation_legend = FALSE,
+                   legend = FALSE,
                    show_rownames = FALSE,
                    show_colnames = FALSE,
                    width = 20,
                    height = 15,
-                   #filename = here::here("results", "heatmap_all_min10.png")
+                   filename = here::here("results", "heatmap_for_crc_clusterd.png")
                    )
 
 ## heatmaps adults #####

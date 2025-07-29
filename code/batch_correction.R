@@ -24,29 +24,29 @@ adjusted_counts_no_group <- ComBat_seq(counts,
 
 
 
-pca_raw_obj = prcomp(t(counts))
+pca_raw_obj = prcomp(t(counts), scale. = TRUE)
 pca_raw_join <- as_tibble(pca_raw_obj$x, rownames = "id") |>
   left_join(meta)
 
-pca_adjusted_obj = prcomp(t(adjusted_counts))
+pca_adjusted_obj = prcomp(t(adjusted_counts), scale. = TRUE)
 pca_adjusted_join <- as_tibble(pca_adjusted_obj$x, rownames = "id") |>
   left_join(meta)
 
-pca_adjusted_no_group_obj = prcomp(t(adjusted_counts_no_group))
+pca_adjusted_no_group_obj = prcomp(t(adjusted_counts_no_group), scale. = TRUE)
 pca_adjusted_no_group_join <- as_tibble(pca_adjusted_no_group_obj$x, rownames = "id") |>
   left_join(meta)
 
 
 
-pca_raw_obj_healthy = prcomp(t(counts[, filter(meta, disease == "healthy")$id]))
+pca_raw_obj_healthy = prcomp(t(counts[, filter(meta, disease == "healthy")$id]), scale. = TRUE)
 pca_raw_join_healthy <- as_tibble(pca_raw_obj_healthy$x, rownames = "id") |>
   left_join(meta)
 
-pca_adjusted_obj_healthy = prcomp(t(adjusted_counts[, filter(meta, disease == "healthy")$id]))
+pca_adjusted_obj_healthy = prcomp(t(adjusted_counts[, filter(meta, disease == "healthy")$id]), scale. = TRUE)
 pca_adjusted_join_healthy <- as_tibble(pca_adjusted_obj_healthy$x, rownames = "id") |>
   left_join(meta)
 
-pca_adjusted_no_group_obj_healthy = prcomp(t(adjusted_counts_no_group[, filter(meta, disease == "healthy")$id]))
+pca_adjusted_no_group_obj_healthy = prcomp(t(adjusted_counts_no_group[, filter(meta, disease == "healthy")$id]), scale. =TRUE)
 pca_adjusted_no_group_join_healthy <- as_tibble(pca_adjusted_no_group_obj_healthy$x, rownames = "id") |>
   left_join(meta)
 
@@ -308,17 +308,32 @@ fviz_eig(pca_adjusted_no_group_obj)
 raw_var <- get_pca_var(pca_raw_obj)
 raw_var$coord
 raw_var$contrib[1:10, 1:10]
+
 raw_var$contrib |>
   as_tibble(rownames = "gene") |>
-  filter(Dim.1 > 0.1) |>
+  #filter(Dim.1 > 0.1) |>
   ggplot(aes(x = reorder(gene, Dim.1), 
              y = Dim.1
              )) +
   geom_point()
 
-    raw_var$cos2   
-    
-fviz_contrib(pca_raw_obj, choice = "var", axes = 1, top = 10)
+      
+fviz_contrib(pca_raw_obj, choice = "var", axes = 1, top = 100)
+fviz_contrib(pca_adjusted_obj, choice = "var", axes = 1, top = 100)
+fviz_contrib(pca_adjusted_no_group_obj, choice = "var", axes = 1, top = 100)
+
+fviz_contrib(pca_raw_obj_healthy, choice = "var", axes = 1, top = Inf)
+fviz_contrib(pca_adjusted_obj_healthy, choice = "var", axes = 1, top = 100)
+fviz_contrib(pca_adjusted_no_group_obj_healthy, choice = "var", axes = 1, top = 100)
+
+
+
+
+
+
+
+
+
 
 #TODO - GSEA on PC1 contributions - it's kind of an ordered list
 

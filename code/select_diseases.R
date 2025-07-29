@@ -125,9 +125,11 @@ pheatmap::pheatmap(sample_cor,
                    color = color.scheme,
                    cluster_rows = sample_tree,
                    cluster_cols = sample_tree,
-                   annotation_col = col_annot, 
-                   annotation_row = row_annot,
-                   #annotation_legend = FALSE,
+                   treeheight_row = 0, 
+                   treeheight_col = 0,
+                   #annotation_col = col_annot, 
+                   #annotation_row = row_annot,
+                   annotation_legend = FALSE,
                    legend = FALSE,
                    show_rownames = FALSE,
                    show_colnames = FALSE)
@@ -182,8 +184,9 @@ p1 <- pcs_adult |>
              #shape = disease
   )) +
   geom_point(size = 1.5) +
-  ggtitle("Adults - selected diseases")
-
+  theme_minimal() +
+  theme(legend.position = "NONE") + 
+  ggtitle("Adult")
 
 xdens <-
   cowplot::axis_canvas(p1, axis = "x") +
@@ -222,7 +225,9 @@ p1 <- pcs_ped |>
              #shape = disease
   )) +
   geom_point(size = 1.5) +
-  ggtitle("Kids - selected diseases")
+  ggtitle("Pediatric") +
+  theme_minimal() + 
+  theme(legend.position = "NONE")
 
 
 xdens <-
@@ -256,6 +261,7 @@ to_plot <- c("sex", "disease", "source",
              "disease_class", 
              "platform_id", "genome")
 
+to_plot <- c("dataset", "disease", "genome")
 
 plot_pc_density <- function(group, dataset, PC="PC1") {
   dataset |>
@@ -270,6 +276,12 @@ plots <- lapply(to_plot,
                 plot_pc_density, 
                 dataset = pcs_adult, 
                 PC = "PC1")
+options(scipen = 1000)
+plots[[1]]  + theme_minimal() + theme(legend.position = "NONE") + ggtitle("Dataset")
+plots[[2]]  + theme_minimal() + theme(legend.position = "NONE") + ggtitle("Disease")
+plots[[3]]  + theme_minimal()  + ggtitle("Reference Genome")
+
+
 cowplot::plot_grid(plotlist = plots, ncol = 2)
 
 
