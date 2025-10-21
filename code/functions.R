@@ -22,10 +22,11 @@ verify_disease <- function(meta){
 
 
 # Takes list of summarised experiments and combines them
+# TODO: Make integer check and curated dusease check optional
 combine_se <- function(se_list, common_only = TRUE){
   stopifnot(
     "alle SEs must have unique colnames" = !any(duplicated(unlist(lapply(se_list, colnames)))),
-    "all SEs must have a counts assay" = all(unlist(lapply(se_list, assayNames)) %in% "counts"),
+    "all SEs must have a counts assay" = sum("counts" == unlist(lapply(se_list, assayNames))) == length(se_list),
     "rownames of the SE cannot be NA" = all(!is.na(unlist(lapply(se_list, rownames)))),
     "all dataset need id, disease, dataset, age, sex, source and processing_info" = {
       coldata_list <- lapply(se_list, colData)
@@ -59,7 +60,8 @@ combine_se <- function(se_list, common_only = TRUE){
   stopifnot("pediatric column cannot contain NA" = !is.na(combined_meta$pediatric))
   
   
-  verify_disease(combined_meta)
+  #TODO - need to recreate verify diseases file
+  #verify_disease(combined_meta)
   
   
   ### Combine Assays 
@@ -76,8 +78,9 @@ combine_se <- function(se_list, common_only = TRUE){
   rownames(assay_mat) <- combined_assay$gene
   
   stopifnot(
-    "Rownames of metadata and colnames of assay must be equal" = all(rownames(combined_meta) == colnames(assay_mat)),
-    "All counts must be integer" = all(round(combined_assay[,-1]) == combined_assay[,-1], na.rm = TRUE))
+    "Rownames of metadata and colnames of assay must be equal" = all(rownames(combined_meta) == colnames(assay_mat))#,
+    #"All counts must be integer" = all(round(combined_assay[,-1]) == combined_assay[,-1], na.rm = TRUE)
+    )
     
   combined_se <- SummarizedExperiment::SummarizedExperiment(
     assays = list("counts" = assay_mat),

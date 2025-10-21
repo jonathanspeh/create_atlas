@@ -9,14 +9,15 @@ library(tidyr)
 # Different covid 19 variants
 
 
-#curl::curl_download("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE190680&format=file",
-#                    destfile = here::here("data", "GSE190680.tar")
-#                    )
+curl::curl_download("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE190680&format=file",
+                    destfile = here::here("data", "GSE190680.tar")
+                    )
 
-#untar(here::here("data", "GSE190680.tar"), 
-#      exdir = here::here("data", "GSE190680"))
+untar(here::here("data", "GSE190680.tar"), 
+      exdir = here::here("data", "GSE190680"))
 
-sm <- getGEO("GSE190680", destdir = here::here("data", "GSE190680"))
+#sm <- getGEO("GSE190680", destdir = here::here("data", "GSE190680"))
+sm <- getGEO("GSE190680")
 #sm <- getGEO(filename =  here::here("data", "GSE190680", "GSE190680_series_matrix.txt.gz"))
 
 

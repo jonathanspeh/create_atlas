@@ -10,13 +10,13 @@ GEO_accs <- "GSE201530"
 file <- paste0(GEO_accs, ".tar")
 dir_path <- paste0(here::here("data", GEO_accs), "/")
 
-# curl::curl_download(paste0("https://www.ncbi.nlm.nih.gov/geo/download/?acc=", 
-#                            GEO_accs, 
-#                            "&format=file"),
-#                     destfile = here::here("data", file))
-# 
-# untar(here::here("data", file), 
-#       exdir = dir_path)
+ curl::curl_download(paste0("https://www.ncbi.nlm.nih.gov/geo/download/?acc=", 
+                            GEO_accs, 
+                            "&format=file"),
+                     destfile = here::here("data", file))
+ 
+ untar(here::here("data", file), 
+       exdir = dir_path)
 
 sm <- getGEO(GEO_accs, destdir = dir_path)
 
